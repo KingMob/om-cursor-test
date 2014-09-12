@@ -1,66 +1,66 @@
 (ns om-cursor-test.core
-  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [cljs.core.async :refer [put! chan <!]]))
+            [om.dom :as dom :include-macros true]))
 
 (enable-console-print!)
 
+; Vector of item-groups
 (def app-state
-  (atom {
-         :question "What is placed between the boat and the dock to cushion the hull?"
-         :image nil
-         :answers [
-                   {:text "Tiller"
-                    :correct false
-                    :status :unchosen}
-                   {:text "Boomvang"
-                    :correct false
-                    :status :unchosen}
-                   {:text "Fender"
-                    :correct true
-                    :status :unchosen}
-                   {:text "Gooseneck"
-                    :correct false
-                    :status :unchosen}
-                   ]}))
+  (atom [{
+          :items [
+                  {:text "Alice"}
+                  {:text "Bob"}
+                  {:text "Cindy"}
+                  {:text "Dave"}
+                  ]}
+         {
+          :items [
+                  {:text "Eve"}
+                  {:text "Fred"}
+                  {:text "Gina"}
+                  {:text "Howard"}
+                  ]}]))
 
-
-(defn answer-view [answer owner]
+(defn item-view [item owner]
   (reify
-    om/IRenderState
-    (render-state [_ {:keys [answer-chan]}]
-                   (dom/button
-                    #js{:onClick (fn [e] (put! answer-chan answer))}
-                    (:text answer)))))
+    om/IRender
+    (render [_]
+            (dom/button nil
+                        (:text item)))))
 
 
-(defn question-view [quiz-question owner]
+; Somehow, by going through this function, it displays
+(defn item-list-view [items owner]
   (reify
-    om/IInitState
-    (init-state [_]
-                {:answer-chan (chan)})
-
-    om/IWillMount
-    (will-mount [_]
-                (let [answer-chan (om/get-state owner :answer-chan)]
-                  (go (loop []
-                        (let [answer-chosen (<! answer-chan)]
-                          (.log js/console (str "Chose " (:text @answer-chosen)))
-;;                           (.log js/console (:correct @answer-chosen))
-                          (om/transact! answer-chosen [:text] #(str % " *"))
-                          (recur))))))
-
-    om/IRenderState
-    (render-state [_ {:keys [answer-chan]}]
-                  (apply dom/div nil
-                         (om/build-all answer-view (:answers quiz-question)
-                                       {:init-state {:answer-chan answer-chan}})))))
+    om/IRender
+    (render [_]
+            (apply dom/div nil
+                   (om/build-all item-view items)))))
 
 
+(defn items-view [item-group owner]
+  (reify
+    om/IRender
+    (render [_]
+            (dom/div nil
+
+                     (dom/h3 nil "This one doesn't render a cursor involving nil. Instead we get some sort of OID.")
+                     (om/build-all item-view (:items item-group)) ; seems like it should be identical to call in item-list-view
+
+                     (dom/h3 nil "Yet this one renders with what seems like an identical code path!")
+                     (om/build item-list-view (:items item-group))))))
+
+
+(defn root-view [app-state owner]
+  (reify
+    om/IRender
+    (render [_]
+            (dom/div nil
+                     (om/build items-view (get app-state nil)) ; here, we index into the vector of item-groups incorrectly, yet sometimes it renders
+                     ))))
 
 
 (om/root
- question-view
+ root-view
  app-state
  {:target (. js/document (getElementById "app"))})

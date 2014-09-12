@@ -1,12 +1,9 @@
 (defproject om-cursor-test "0.1.0-SNAPSHOT"
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
+  :description "Om cursor test"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-;;                  [org.clojure/clojurescript "0.0-2322"]
-                 [org.clojure/clojurescript "0.0-2311"]
-                 [org.clojure/core.async "0.1.338.0-5c5012-alpha"]
-;;                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
+                 [org.clojure/clojurescript "0.0-2322"]
+;;                  [org.clojure/clojurescript "0.0-2311"]
                  [om "0.7.1"]]
 
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]]
